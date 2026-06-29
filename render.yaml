@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: rihla
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_PATH
+        value: /data/rihla.db
+      - key: CORS_ORIGIN
+        sync: false
+    disk:
+      name: rihla-data
+      mountPath: /data
+      sizeGB: 1

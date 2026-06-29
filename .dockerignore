@@ -1,0 +1,19 @@
+# Dépendances installées (réinstallées proprement dans la boîte)
+node_modules
+server/node_modules
+
+# Résultat de build local (refait dans la boîte)
+dist
+
+# Base de données locale de test — chaque agence démarre vierge
+server/data
+
+# Historique Git et fichiers système
+.git
+.gitignore
+**/.DS_Store
+
+# Variables d'environnement locales (secrets) — ne pas embarquer
+server/.env
+.env
+.env.local

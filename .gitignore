@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+server/node_modules/
+
+# Build
+dist/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+server/.env
+server/.env.*
+!server/.env.example
+
+# Database (local dev)
+server/data/
+*.db
+*.db-shm
+*.db-wal
+
+# OS & editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+*.log
+
+# Archives (generated locally)
+rihla-backup-*.zip
+rihla-platform-*.zip
+
+# Documents clients / marketing (fichiers locaux, hors dépôt)
+*.pdf
+*.pptx
+*.PDF
+*.PPTX
+IMG_*.PNG
+IMG_*.JPG
+IMG_*.JPEG
+"Logo Bab Annasr.jpeg"
+Logo*.jpeg
+Logo*.jpg
+"4-Dashboard Suivi Mensuel*.html"
+*.html
+!index.html
+!public/**/*.html
+
+# Claude Code internal
+.claude/

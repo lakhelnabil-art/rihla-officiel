@@ -1,0 +1,23 @@
+.recherche-panel {
+  --bg: #f1f5f9;
+  --bg2: #ffffff;
+  --bg3: #f8fafc;
+  --card: #ffffff;
+  --border: #e2e8f0;
+  --text: #14161d;
+  --muted: #64748b;
+  --accent: #0e8c7f;
+  --accent2: #0e8c7f;
+  --green: #16a34a;
+  --yellow: #d97706;
+  --red: #dc2626;
+  --blue: #2563eb;
+}
+
+.recherche-panel a:focus-visible,
+.recherche-panel button:focus-visible,
+.recherche-panel input:focus-visible,
+.recherche-panel select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
