@@ -51,6 +51,9 @@ export const api = {
 
   me: () => request('/auth/me'),
 
+  updateMe: (payload) =>
+    request('/auth/me', { method: 'PUT', body: JSON.stringify(payload) }),
+
   createUser: (payload) =>
     request('/auth/users', { method: 'POST', body: JSON.stringify(payload) }),
 

@@ -218,6 +218,43 @@ router.post('/leave-agency', authMiddleware, (req, res) => {
   res.json({ token })
 })
 
+/** Update own email and/or password. */
+router.put('/me', authMiddleware, async (req, res) => {
+  try {
+    const { currentPassword, newEmail, newPassword } = req.body
+    if (!currentPassword) return res.status(400).json({ error: 'Mot de passe actuel requis' })
+
+    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.sub)
+    if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' })
+
+    const ok = await bcrypt.compare(currentPassword, user.password_hash)
+    if (!ok) return res.status(401).json({ error: 'Mot de passe actuel incorrect' })
+
+    const updates = {}
+    if (newEmail) {
+      const normalized = newEmail.trim().toLowerCase()
+      const taken = db.prepare('SELECT id FROM users WHERE email = ? AND id != ?').get(normalized, user.id)
+      if (taken) return res.status(409).json({ error: 'Cet email est déjà utilisé' })
+      updates.email = normalized
+    }
+    if (newPassword) {
+      if (newPassword.length < 6) return res.status(400).json({ error: 'Nouveau mot de passe minimum 6 caractères' })
+      updates.password_hash = await bcrypt.hash(newPassword, 10)
+    }
+
+    if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'Aucune modification fournie' })
+
+    const fields = Object.keys(updates).map(k => `${k} = ?`).join(', ')
+    db.prepare(`UPDATE users SET ${fields} WHERE id = ?`).run(...Object.values(updates), user.id)
+
+    const updated = db.prepare('SELECT id, email, name FROM users WHERE id = ?').get(user.id)
+    res.json({ user: formatUser(updated) })
+  } catch (err) {
+    console.error('[update-me]', err)
+    res.status(500).json({ error: 'Erreur lors de la mise à jour' })
+  }
+})
+
 /** Admin creates an agent login for the current agency. */
 router.post('/users', authMiddleware, adminMiddleware, async (req, res) => {
   try {

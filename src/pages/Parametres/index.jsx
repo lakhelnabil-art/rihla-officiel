@@ -6,7 +6,7 @@ import {
   CheckCircle, AlertTriangle, Globe, Mail,
   FileText, Shield, ChevronRight, Eye, EyeOff,
   Image as ImageIcon, Lock, ShieldAlert, Link2, Copy, UserPlus, Users,
-  FolderOpen, Plug,
+  FolderOpen, Plug, KeyRound,
 } from 'lucide-react'
 import { useLocalStorage } from '../../hooks/useLocalStorage'
 import { useToast } from '../../hooks/useToast'
@@ -498,6 +498,81 @@ const PreferencesSection = ({ settings, onChange }) => {
 }
 
 /* ─────────────────────────────────────────
+   BLOC: MON COMPTE (email + mot de passe)
+───────────────────────────────────────── */
+
+const MonCompteBlock = () => {
+  const toast = useToast()
+  const { user } = useAuth()
+  const [form, setForm] = useState({ currentPassword: '', newEmail: '', newPassword: '', confirmPassword: '' })
+  const [saving, setSaving] = useState(false)
+  const [showPw, setShowPw] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (form.newPassword && form.newPassword !== form.confirmPassword) {
+      toast.error('Les nouveaux mots de passe ne correspondent pas')
+      return
+    }
+    if (!form.newEmail && !form.newPassword) {
+      toast.error('Renseignez un nouvel email ou un nouveau mot de passe')
+      return
+    }
+    setSaving(true)
+    try {
+      const payload = { currentPassword: form.currentPassword }
+      if (form.newEmail) payload.newEmail = form.newEmail
+      if (form.newPassword) payload.newPassword = form.newPassword
+      await api.updateMe(payload)
+      toast.success('Identifiants mis à jour')
+      setForm({ currentPassword: '', newEmail: '', newPassword: '', confirmPassword: '' })
+    } catch (err) {
+      toast.error(err.message || 'Erreur')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4 border border-gray-100 rounded-xl p-4 bg-gray-50/50">
+      <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+        <KeyRound className="w-4 h-4" /> Modifier mes identifiants
+      </h4>
+      <p className="text-xs text-gray-400">Compte connecté : <span className="font-medium text-gray-600">{user?.email}</span></p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Field label="Mot de passe actuel *">
+          <input type="password" className="input-field" required value={form.currentPassword}
+            onChange={e => setForm(f => ({ ...f, currentPassword: e.target.value }))}
+            placeholder="Votre mot de passe actuel" />
+        </Field>
+        <Field label="Nouvel email (optionnel)">
+          <input type="email" className="input-field" value={form.newEmail}
+            onChange={e => setForm(f => ({ ...f, newEmail: e.target.value }))}
+            placeholder="nouveau@email.ma" />
+        </Field>
+        <Field label="Nouveau mot de passe (optionnel)">
+          <div className="relative">
+            <input type={showPw ? 'text' : 'password'} className="input-field pr-10" value={form.newPassword}
+              onChange={e => setForm(f => ({ ...f, newPassword: e.target.value }))}
+              placeholder="Minimum 6 caractères" />
+            <button type="button" onClick={() => setShowPw(v => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+        </Field>
+        <Field label="Confirmer le nouveau mot de passe">
+          <input type="password" className="input-field" value={form.confirmPassword}
+            onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))}
+            placeholder="Répétez le nouveau mot de passe" />
+        </Field>
+      </div>
+      <Button type="submit" icon={KeyRound} disabled={saving}>{saving ? 'Enregistrement…' : 'Mettre à jour mes identifiants'}</Button>
+    </form>
+  )
+}
+
+/* ─────────────────────────────────────────
    SECTION: COMPTES ACCÈS
 ───────────────────────────────────────── */
 
@@ -565,6 +640,8 @@ const UtilisateursSection = () => {
           )}
         </Card.Body>
       </Card>
+
+      <MonCompteBlock />
 
       <form onSubmit={handleCreate} className="space-y-4 border border-gray-100 rounded-xl p-4 bg-gray-50/50">
         <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
