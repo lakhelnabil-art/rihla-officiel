@@ -12,6 +12,7 @@ import mailRoutes from './routes/mail.js'
 import usersRoutes from './routes/users.js'
 import searchRoutes from './routes/search.js'
 import gdsRoutes from './routes/gds.js'
+import { scheduleBackup } from './backup.js'
 
 const app = express()
 
@@ -72,6 +73,8 @@ const lanAddresses = () => {
   }
   return addrs
 }
+
+scheduleBackup()
 
 app.listen(config.port, '0.0.0.0', () => {
   console.log(`Rihla → http://localhost:${config.port} (${config.nodeEnv})`)
