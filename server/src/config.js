@@ -24,4 +24,4 @@ export const config = {
   },
 }
 
-export const isProduction = () => config.nodeEnv === 'production'
+export const isProduction = () => config.nodeEnv.toLowerCase() === 'production'
