@@ -368,6 +368,34 @@ const SuperAdminPanel = ({ onClose, superPin }) => {
             </div>
           </div>
 
+          {/* All accounts */}
+          <div>
+            <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4" /> Tous les comptes
+            </h3>
+            {loadingUsers ? (
+              <p className="text-xs text-slate-400">Chargement…</p>
+            ) : users.length === 0 ? (
+              <p className="text-xs text-slate-400 italic">Aucun compte trouvé.</p>
+            ) : (
+              <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden">
+                {users.map(u => (
+                  <div key={u.id} className="px-4 py-3 flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-slate-800 truncate">{u.email}</p>
+                      {u.name && u.name !== u.email && (
+                        <p className="text-xs text-slate-500 truncate">{u.name}</p>
+                      )}
+                      {u.agences && (
+                        <p className="text-xs text-teal-600 truncate">{u.agences}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Reset password */}
           <div>
             <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
