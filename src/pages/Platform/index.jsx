@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import {
   Plus, Settings, ChevronLeft, Building2,
-  Trash2, Edit2, ShieldCheck, Eye, EyeOff,
+  Trash2, Edit2, ShieldCheck, Eye, EyeOff, KeyRound, RefreshCw,
 } from 'lucide-react'
 import { usePlatform } from '../../context/PlatformContext'
 import { useAuth } from '../../context/AuthContext'
@@ -259,7 +259,7 @@ const NewAgencyModal = ({ onClose, onCreated }) => {
 
 /* ─── SuperAdminPanel ─────────────────────────────────────────────── */
 
-const SuperAdminPanel = ({ onClose }) => {
+const SuperAdminPanel = ({ onClose, superPin }) => {
   const { agencies, deleteAgency, setSuperPin } = usePlatform()
   const [currentPin, setCurrentPin] = useState('')
   const [newPin, setNewPin] = useState('')
@@ -267,6 +267,36 @@ const SuperAdminPanel = ({ onClose }) => {
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
   const [confirmDel, setConfirmDel] = useState(null)
+
+  // Réinitialisation mot de passe
+  const [users, setUsers] = useState([])
+  const [loadingUsers, setLoadingUsers] = useState(false)
+  const [resetTarget, setResetTarget] = useState(null)
+  const [newPw, setNewPw] = useState('')
+  const [resetMsg, setResetMsg] = useState('')
+  const [resetError, setResetError] = useState('')
+
+  useEffect(() => {
+    setLoadingUsers(true)
+    api.platformUsers(superPin)
+      .then(setUsers)
+      .catch(() => {})
+      .finally(() => setLoadingUsers(false))
+  }, [superPin])
+
+  const handleReset = async () => {
+    if (!resetTarget || newPw.length < 6) return
+    setResetMsg('')
+    setResetError('')
+    try {
+      await api.resetUserPassword(superPin, resetTarget.id, newPw)
+      setResetMsg(`✓ Mot de passe de ${resetTarget.email} réinitialisé`)
+      setResetTarget(null)
+      setNewPw('')
+    } catch (err) {
+      setResetError(err.message || 'Erreur')
+    }
+  }
 
   const handleSavePin = async () => {
     if (newPin.length < 4 || currentPin.length < 4) return
@@ -338,6 +368,57 @@ const SuperAdminPanel = ({ onClose }) => {
             </div>
           </div>
 
+          {/* Reset password */}
+          <div>
+            <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+              <KeyRound className="w-4 h-4" /> Réinitialiser un mot de passe
+            </h3>
+            {resetMsg && <p className="text-xs text-green-600 mb-2">{resetMsg}</p>}
+            {resetError && <p className="text-xs text-red-500 mb-2">{resetError}</p>}
+            {loadingUsers ? (
+              <p className="text-xs text-slate-400">Chargement…</p>
+            ) : (
+              <div className="space-y-2">
+                <select
+                  className="input-field text-sm"
+                  value={resetTarget?.id || ''}
+                  onChange={e => {
+                    const u = users.find(u => u.id === e.target.value)
+                    setResetTarget(u || null)
+                    setNewPw('')
+                    setResetMsg('')
+                    setResetError('')
+                  }}
+                >
+                  <option value="">— Choisir un compte —</option>
+                  {users.map(u => (
+                    <option key={u.id} value={u.id}>
+                      {u.email}{u.agences ? ` (${u.agences})` : ''}
+                    </option>
+                  ))}
+                </select>
+                {resetTarget && (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      className="input-field flex-1 text-sm"
+                      placeholder="Nouveau mot de passe (6+ car.)"
+                      value={newPw}
+                      onChange={e => setNewPw(e.target.value)}
+                    />
+                    <button
+                      onClick={handleReset}
+                      disabled={newPw.length < 6}
+                      className="btn-primary flex items-center gap-1 disabled:opacity-40 text-sm"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" /> Réinitialiser
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Agency list */}
           <div>
             <h3 className="text-sm font-semibold text-slate-700 mb-3">
@@ -400,12 +481,13 @@ const SuperAdminPanel = ({ onClose }) => {
 export const PlatformScreen = () => {
   const { agencies, selectAgency, verifySuperPin, logout } = usePlatform()
   const { user } = useAuth()
-  const [showNew,    setShowNew]    = useState(false)
-  const [showAdmin,  setShowAdmin]  = useState(false)
-  const [pinPrompt,  setPinPrompt]  = useState(false)
-  const [pin,        setPin]        = useState('')
-  const [pinError,   setPinError]   = useState('')
-  const [loading,    setLoading]    = useState(false)
+  const [showNew,      setShowNew]      = useState(false)
+  const [showAdmin,    setShowAdmin]    = useState(false)
+  const [pinPrompt,    setPinPrompt]    = useState(false)
+  const [pin,          setPin]          = useState('')
+  const [confirmedPin, setConfirmedPin] = useState('')
+  const [pinError,     setPinError]     = useState('')
+  const [loading,      setLoading]      = useState(false)
 
   const handleAgencyClick = async (ag) => {
     setLoading(true)
@@ -421,6 +503,7 @@ export const PlatformScreen = () => {
   const checkAdminPin = async () => {
     try {
       await verifySuperPin(pin)
+      setConfirmedPin(pin)
       setPinPrompt(false)
       setShowAdmin(true)
     } catch {
@@ -439,7 +522,7 @@ export const PlatformScreen = () => {
           onCreated={async (ag) => { setShowNew(false); await selectAgency(ag.id) }}
         />
       )}
-      {showAdmin && <SuperAdminPanel onClose={() => setShowAdmin(false)} />}
+      {showAdmin && <SuperAdminPanel onClose={() => setShowAdmin(false)} superPin={confirmedPin} />}
 
       {/* PIN prompt for super-admin */}
       {pinPrompt && (

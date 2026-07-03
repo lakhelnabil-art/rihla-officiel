@@ -97,6 +97,12 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify({ currentPin, newPin }),
     }),
+
+  platformUsers: (pin) =>
+    request('/platform/users', { method: 'POST', body: JSON.stringify({ pin }) }),
+
+  resetUserPassword: (pin, userId, newPassword) =>
+    request('/platform/reset-password', { method: 'POST', body: JSON.stringify({ pin, userId, newPassword }) }),
 }
 
 export { ApiError, request }
