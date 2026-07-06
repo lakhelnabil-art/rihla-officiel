@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import {
   Plus, Settings, ChevronLeft, Building2,
-  Trash2, Edit2, ShieldCheck, Eye, EyeOff, KeyRound, RefreshCw,
+  Trash2, Edit2, ShieldCheck, Eye, EyeOff, KeyRound, RefreshCw, ClipboardList,
 } from 'lucide-react'
 import { usePlatform } from '../../context/PlatformContext'
 import { useAuth } from '../../context/AuthContext'
@@ -268,6 +268,18 @@ const SuperAdminPanel = ({ onClose, superPin }) => {
   const [error, setError] = useState('')
   const [confirmDel, setConfirmDel] = useState(null)
 
+  // Journal de connexions
+  const [logs, setLogs] = useState([])
+  const [loadingLogs, setLoadingLogs] = useState(false)
+
+  useEffect(() => {
+    setLoadingLogs(true)
+    api.loginLogs(superPin)
+      .then(setLogs)
+      .catch(() => {})
+      .finally(() => setLoadingLogs(false))
+  }, [superPin])
+
   // Réinitialisation mot de passe
   const [users, setUsers] = useState([])
   const [loadingUsers, setLoadingUsers] = useState(false)
@@ -366,6 +378,32 @@ const SuperAdminPanel = ({ onClose, superPin }) => {
               </button>
             </div>
             </div>
+          </div>
+
+          {/* Login journal */}
+          <div>
+            <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+              <ClipboardList className="w-4 h-4" /> Journal des connexions
+            </h3>
+            {loadingLogs ? (
+              <p className="text-xs text-slate-400">Chargement…</p>
+            ) : logs.length === 0 ? (
+              <p className="text-xs text-slate-400 italic">Aucune connexion enregistrée.</p>
+            ) : (
+              <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden max-h-48 overflow-y-auto">
+                {logs.map((log, i) => (
+                  <div key={i} className="flex items-center justify-between px-4 py-2 gap-2">
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-slate-800 truncate">{log.email}</p>
+                      <p className="text-xs text-slate-400">{new Date(log.created_at).toLocaleString('fr-FR')} — IP : {log.ip}</p>
+                    </div>
+                    <span className={`text-xs font-semibold flex-shrink-0 ${log.success ? 'text-green-600' : 'text-red-500'}`}>
+                      {log.success ? '✓ OK' : '✗ Échec'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* All accounts */}

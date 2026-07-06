@@ -127,11 +127,23 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email et mot de passe requis' })
     }
 
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.trim().toLowerCase())
-    if (!user) return res.status(401).json({ error: 'Identifiants incorrects' })
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'inconnue'
+    const now = new Date().toISOString()
+    const normalized = email.trim().toLowerCase()
+
+    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(normalized)
+    if (!user) {
+      db.prepare('INSERT INTO login_logs (email, ip, success, created_at) VALUES (?, ?, 0, ?)').run(normalized, ip, now)
+      return res.status(401).json({ error: 'Identifiants incorrects' })
+    }
 
     const ok = await bcrypt.compare(password, user.password_hash)
-    if (!ok) return res.status(401).json({ error: 'Identifiants incorrects' })
+    if (!ok) {
+      db.prepare('INSERT INTO login_logs (email, ip, success, created_at) VALUES (?, ?, 0, ?)').run(normalized, ip, now)
+      return res.status(401).json({ error: 'Identifiants incorrects' })
+    }
+
+    db.prepare('INSERT INTO login_logs (email, ip, success, created_at) VALUES (?, ?, 1, ?)').run(normalized, ip, now)
 
     const agencies = userAgencies.all(user.id).map(formatAgency)
     const token = signToken({

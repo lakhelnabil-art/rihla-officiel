@@ -34,6 +34,23 @@ router.get('/super-pin', (_req, res) => {
   res.json({ configured: true })
 })
 
+/** Login journal (super-admin only, verified by PIN). */
+router.post('/login-logs', (req, res) => {
+  const { pin } = req.body
+  const row = db.prepare('SELECT value FROM platform_settings WHERE key = ?').get('super_pin')
+  const expected = row?.value ?? '0000'
+  if (pin !== expected) return res.status(401).json({ error: 'PIN incorrect' })
+
+  const logs = db.prepare(`
+    SELECT email, ip, success, created_at
+    FROM login_logs
+    ORDER BY created_at DESC
+    LIMIT 100
+  `).all()
+
+  res.json(logs)
+})
+
 /** List all users (super-admin only, verified by PIN). */
 router.post('/users', (req, res) => {
   const { pin } = req.body

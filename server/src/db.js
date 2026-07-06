@@ -102,6 +102,14 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_gds_connections_agency ON gds_connections(agency_id);
   CREATE INDEX IF NOT EXISTS idx_gds_pnrs_agency ON gds_pnrs(agency_id);
   CREATE INDEX IF NOT EXISTS idx_gds_audit_agency ON gds_audit_log(agency_id);
+
+  CREATE TABLE IF NOT EXISTS login_logs (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    email      TEXT NOT NULL,
+    ip         TEXT,
+    success    INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL
+  );
 `)
 
 const pinRow = db.prepare('SELECT value FROM platform_settings WHERE key = ?').get('super_pin')
